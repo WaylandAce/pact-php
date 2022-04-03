@@ -51,6 +51,9 @@ class VerifierConfig implements VerifierConfigInterface
     /** @var null|string */
     private $logDirectory;
 
+    /** @var null|string */
+    private $pactBrokerBaseUrl;
+
     /** @var string */
     private $format;
 
@@ -494,5 +497,23 @@ class VerifierConfig implements VerifierConfigInterface
     public function getProviderBranch(): ?string
     {
         return $this->providerBranch;
+    }
+
+    /**
+     * @return string|null
+     */
+    public function getPactBrokerBaseUrl(): ?string
+    {
+        return $this->pactBrokerBaseUrl;
+    }
+
+    /**
+     * @param string|null $pactBrokerBaseUrl
+     */
+    public function setPactBrokerBaseUrl(?string $pactBrokerBaseUrl): self
+    {
+        $this->pactBrokerBaseUrl = $pactBrokerBaseUrl;
+
+        return $this;
     }
 }

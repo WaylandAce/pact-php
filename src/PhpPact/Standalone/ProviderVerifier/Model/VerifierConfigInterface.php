@@ -289,4 +289,12 @@ interface VerifierConfigInterface
      * @return $this
      */
     public function setRequestFilter(callable $requestFilter): self;
+
+    public function getPactBrokerBaseUrl(): ?string;
+
+    /**
+     * @param string|null $pactBrokerBaseUrl
+     */
+    public function setPactBrokerBaseUrl(?string $pactBrokerBaseUrl): self;
 }
+
