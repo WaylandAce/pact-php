@@ -47,19 +47,19 @@ class ConsumerVersionSelectors implements Iterator, Countable
     }
 
     #[\ReturnTypeWillChange]
-    public function valid()
+    public function valid(): bool
     {
         return isset($this->selectors[$this->position]);
     }
 
     #[\ReturnTypeWillChange]
-    public function rewind()
+    public function rewind(): void
     {
         $this->position = 0;
     }
 
     #[\ReturnTypeWillChange]
-    public function count()
+    public function count(): int
     {
         return \count($this->selectors);
     }

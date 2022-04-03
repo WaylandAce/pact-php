@@ -167,7 +167,7 @@ class ConsumerRequest implements \JsonSerializable
      * {@inheritdoc}
      */
     #[\ReturnTypeWillChange]
-    public function jsonSerialize()
+    public function jsonSerialize(): array
     {
         $results = [];
 
