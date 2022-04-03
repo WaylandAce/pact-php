@@ -109,4 +109,51 @@ class BrokerHttpClient implements BrokerHttpClientInterface
 
         return $urls;
     }
+
+    /**
+     * {@inheritdoc}
+     */
+    public function contractsPublish(
+        string  $consumer,
+        string  $consumerVersion,
+        ?string $consumerBranch,
+        array   $contracts,
+        array   $consumerTags = [],
+        ?string $buildUrl = null
+    ): array {
+        $uri = $this->baseUri->withPath("/contracts/publish");
+
+        $data = array_map(function($contract) use ($consumer) {
+            $pact = json_decode($contract, true);
+
+            return [
+                "consumerName" => $consumer,
+                "providerName" => $pact['provider']['name'],
+                "specification" => "pact",
+                "contentType" => "application/json",
+                "content" => base64_encode($contract),
+            ];
+        }, $contracts);
+
+        $body = [
+            'pacticipantName' => $consumer,
+            'pacticipantVersionNumber' => $consumerVersion,
+            'branch' => $consumerBranch,
+            'buildUrl' => $buildUrl,
+            'contracts' => $data,
+        ];
+
+        if (count($consumerTags) > 0) {
+            $body['tags'] = $consumerTags;
+        }
+
+        $response = $this->httpClient->post($uri, [
+            'headers' => $this->headers,
+            'body' => \json_encode($body)
+        ]);
+
+        $json = \json_decode($response->getBody()->getContents(), true);
+
+        return $json['notices'];
+    }
 }

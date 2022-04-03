@@ -58,4 +58,25 @@ interface BrokerHttpClientInterface
      * @return array
      */
     public function getAllConsumerUrlsForTag(string $provider, string $tag): array;
+
+    /**
+     * Publish contract
+     *
+     * @param string $consumer The consumer app name
+     * @param string $consumerVersion The version number of the application. Required. It is recommended that this should be or include the git SHA. See http://docs.pact.io/versioning.
+     * @param string|null $consumerBranch The git branch name.
+     * @param array $contracts The content of the contracts
+     * @param array $consumerTags The consumer version tags. Use of the branch parameter is preferred now.
+     * @param string|null $buildUrl The CI/CD build URL
+     *
+     * @return array List of notices returned from broker. Designed to be displayed in the output of a CLI.
+     */
+    public function contractsPublish(
+        string  $consumer,
+        string  $consumerVersion,
+        ?string  $consumerBranch,
+        array   $contracts,
+        array   $consumerTags = [],
+        ?string $buildUrl = null
+    ): array;
 }
