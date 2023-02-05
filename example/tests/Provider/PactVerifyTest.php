@@ -3,8 +3,6 @@
 namespace Provider;
 
 use GuzzleHttp\Psr7\Uri;
-use PhpPact\Standalone\Installer\Exception\FileDownloadFailureException;
-use PhpPact\Standalone\Installer\Exception\NoDownloaderFoundException;
 use PhpPact\Standalone\ProviderVerifier\Model\VerifierConfig;
 use PhpPact\Standalone\ProviderVerifier\Verifier;
 use PhpPact\Standalone\Runner\ProcessRunner;
@@ -41,9 +39,6 @@ class PactVerifyTest extends TestCase
 
     /**
      * This test will run after the web server is started.
-     *
-     * @throws FileDownloadFailureException
-     * @throws NoDownloaderFoundException
      */
     public function testPactVerifyConsumer()
     {
@@ -53,7 +48,7 @@ class PactVerifyTest extends TestCase
             ->setProviderVersion('1.0.0') // Providers version.
             ->setProviderBranch('main') // Providers git branch
             ->setProviderBaseUrl(new Uri('http://localhost:7202')) // URL of the Provider.
-            ; // Flag the verifier service to publish the results to the Pact Broker.
+        ; // Flag the verifier service to publish the results to the Pact Broker.
 
         // Verify that the Consumer 'someConsumer' that is tagged with 'master' is valid.
         $verifier = new Verifier($config);

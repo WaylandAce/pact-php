@@ -7,8 +7,6 @@ use Monolog\Handler\TestHandler;
 use Monolog\Logger;
 use PhpPact\Broker\Service\BrokerHttpClient;
 use PhpPact\Broker\Service\BrokerHttpClientInterface;
-use PhpPact\Standalone\Installer\InstallManager;
-use PhpPact\Standalone\Installer\Model\Scripts;
 use PhpPact\Standalone\ProviderVerifier\Model\ConsumerVersionSelectors;
 use PhpPact\Standalone\ProviderVerifier\Model\VerifierConfig;
 use PHPUnit\Framework\TestCase;
@@ -36,6 +34,7 @@ class VerifierTest extends TestCase
             ->setBrokerToken('someToken')
             ->setBrokerUsername('someusername')
             ->setBrokerPassword('somepassword')
+            ->setBrokerUri(new Uri('https://example.broker/'))
             ->addCustomProviderHeader('key1', 'value1')
             ->addCustomProviderHeader('key2', 'value2')
             ->setVerbose(true)
@@ -64,8 +63,8 @@ class VerifierTest extends TestCase
         $this->assertContains('--broker-password=somepassword', $arguments);
         $this->assertContains('--custom-provider-header="key1: value1"', $arguments);
         $this->assertContains('--custom-provider-header="key2: value2"', $arguments);
-        $this->assertContains('--verbose', $arguments);
-        $this->assertContains('--log=my/log/directory', $arguments);
+        $this->assertContains('--verbose=VERBOSE', $arguments);
+        $this->assertContains('--log-dir=my/log/directory', $arguments);
         $this->assertContains('--format=someformat', $arguments);
         $this->assertContains('--provider-version-tag=prod', $arguments);
         $this->assertContains('--provider-version-tag=dev', $arguments);
@@ -77,6 +76,7 @@ class VerifierTest extends TestCase
         $this->assertContains('--consumer-version-selector=\'{"tag":"foo","latest":true}\'', $this->stripSpaces($arguments));
         $this->assertContains('--consumer-version-selector=\'{"tag":"bar","latest":true}\'', $this->stripSpaces($arguments));
         $this->assertContains('--provider=\'some provider with whitespace\'', $arguments);
+        $this->assertContains('--pact-broker-base-url=https://example.broker/', $arguments);
     }
 
     /**
@@ -104,9 +104,6 @@ class VerifierTest extends TestCase
      * @param null|string $tag
      * @param null|string $version
      * @param string      $path
-     *
-     * @throws \PhpPact\Standalone\Installer\Exception\FileDownloadFailureException
-     * @throws \PhpPact\Standalone\Installer\Exception\NoDownloaderFoundException
      */
     public function testBuildValidPathToPactBroker($consumerName, $providerName, $tag, $version, $path)
     {
@@ -119,11 +116,9 @@ class VerifierTest extends TestCase
             ->with($path)
             ->willReturn($uriMock);
 
-        $uriMock->expects($this->once())
+        $uriMock->expects($this->any())
             ->method('__toString')
             ->willReturn($expectedUrltoBroker);
-
-        $installerMock = $this->createMock(InstallManager::class);
 
         $verifierProcessMock = $this->createMock(VerifierProcess::class);
         $verifierProcessMock->expects($this->once())
@@ -141,7 +136,7 @@ class VerifierTest extends TestCase
             ->setBrokerUri($uriMock)
             ->setVerbose(true);
 
-        $verifier = new Verifier($config, $installerMock, $verifierProcessMock);
+        $verifier = new Verifier($config, $verifierProcessMock);
 
         $verifier->verify($consumerName, $tag, $version);
     }
@@ -168,17 +163,12 @@ class VerifierTest extends TestCase
      * @param string $providerVersion
      * @param bool   $forceLatest
      * @param mixed  $expectedProviderVersion
-     *
-     * @throws \PhpPact\Standalone\Installer\Exception\FileDownloadFailureException
-     * @throws \PhpPact\Standalone\Installer\Exception\NoDownloaderFoundException
      */
     public function testIfDataForVerifyAllIsConvertedCorrectly($providerName, $providerVersion)
     {
         $expectedUrl1     = 'expectedUrl1';
         $expectedUrl2     = 'expectedUrl2';
         $expectedPactUrls = [$expectedUrl1, $expectedUrl2];
-
-        $installerMock = $this->createMock(InstallManager::class);
 
         $verifierProcessMock = $this->createMock(VerifierProcess::class);
         $verifierProcessMock->expects($this->once())
@@ -200,7 +190,7 @@ class VerifierTest extends TestCase
         $config->setProviderName($providerName);
         $config->setProviderVersion($providerVersion);
 
-        $verifier = new Verifier($config, $installerMock, $verifierProcessMock, $brokerHttpClient);
+        $verifier = new Verifier($config, $verifierProcessMock, $brokerHttpClient);
         $verifier->verifyAll();
     }
 
@@ -220,13 +210,7 @@ class VerifierTest extends TestCase
             $cmd = 'cmd /c' . __DIR__ . \DIRECTORY_SEPARATOR . 'verifier.bat';
         }
 
-        $scriptsMock = $this->createMock(Scripts::class);
-        $scriptsMock->method('getProviderVerifier')->willReturn($cmd);
-
-        $installerMock = $this->createMock(InstallManager::class);
-        $installerMock->method('install')->willReturn($scriptsMock);
-
-        $process = new VerifierProcess($installerMock);
+        $process = new VerifierProcess(new ProcessRunnerFactory($cmd));
 
         $logger = new Logger('console', [$handler = new TestHandler()]);
         $process->setLogger($logger);
